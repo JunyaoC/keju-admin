@@ -1,0 +1,76 @@
+---
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import ProfileSettings from '@/components/profile/ProfileSettings.vue';
+import { db } from '@/lib/db';
+
+let profile = null;
+let error = null;
+
+try {
+  // Only fetch what we need
+  const employer = await db.employer.findUnique({
+    where: {
+      userId: Astro.locals.user.id
+    },
+    select: {
+      id: true,
+      role: true,
+      department: true,
+      business: {
+        select: {
+          id: true,
+          name: true,
+          address: true,
+          description: true,
+          logo: true
+        }
+      }
+    }
+  });
+
+  // Transform data for the component
+  const user = {
+    id: Astro.locals.user.id,
+    email: Astro.locals.user.email,
+    name: Astro.locals.user.name,
+    employer: employer ? {
+      id: employer.id,
+      role: employer.role,
+      department: employer.department,
+      business: employer.business
+    } : undefined
+  };
+
+  profile = employer ? {
+    businessId: employer.business.id,
+    businessName: employer.business.name,
+    businessAddress: employer.business.address,
+    businessDescription: employer.business.description || '',
+    businessLogo: employer.business.logo,
+    contactPerson: {
+      name: Astro.locals.user.name,
+      role: employer.role,
+      department: employer.department || '',
+    }
+  } : undefined;
+
+} catch (e) {
+  console.error('Error fetching profile:', e);
+  error = 'Failed to load profile data';
+}
+---
+
+<AdminLayout title="Profile Settings | Admin">
+  {error && (
+    <div class="container py-4">
+      <div class="bg-destructive/15 text-destructive px-4 py-2 rounded">
+        {error}
+      </div>
+    </div>
+  )}
+  <ProfileSettings 
+    client:load 
+    initialUser={Astro.locals.user}
+    initialProfile={profile}
+  />
+</AdminLayout> 

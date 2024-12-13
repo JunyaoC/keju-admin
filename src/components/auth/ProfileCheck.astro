@@ -1,0 +1,39 @@
+---
+// Get user data from locals
+const { auth } = Astro.locals;
+const currentPath = Astro.url.pathname;
+const isProfilePage = currentPath === '/profile';
+
+// Safely check if profile is incomplete
+const isProfileIncomplete = auth?.isProfileComplete === false;
+const shouldShowModal = isProfileIncomplete && !isProfilePage;
+
+// If you're making any fetch calls to check endpoint
+const checkProfile = async () => {
+  const response = await fetch(`${window.location.origin}/api/profile/check.json`);
+  return await response.json();
+};
+---
+
+{shouldShowModal && (
+  <div class="fixed inset-0 z-50">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-background/80 backdrop-blur-sm"></div>
+    
+    <!-- Modal -->
+    <div class="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg">
+      <div class="flex flex-col space-y-2 text-center sm:text-left">
+        <h2 class="text-lg font-semibold">Welcome to Keju! 👋</h2>
+        <p class="text-sm text-muted-foreground">Please complete your business profile to continue.</p>
+      </div>
+      <div class="flex justify-end">
+        <a 
+          href="/profile"
+          class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+        >
+          Complete Profile
+        </a>
+      </div>
+    </div>
+  </div>
+)} 

@@ -1,0 +1,25 @@
+---
+import '@/styles/globals.css';
+import LoginForm from '@/components/auth/LoginForm.vue';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login - Keju Admin</title>
+    <script>
+      import { Clerk } from '@clerk/clerk-js';
+      
+      const clerk = new Clerk(import.meta.env.PUBLIC_CLERK_PUBLISHABLE_KEY, {
+        frontendApi: import.meta.env.PUBLIC_CLERK_FRONTEND_API
+      });
+      await clerk.load();
+      
+      window.Clerk = clerk;
+    </script>
+  </head>
+  <body class="min-h-screen bg-background flex items-center justify-center p-4">
+    <LoginForm client:load />
+  </body>
+</html>

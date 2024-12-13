@@ -1,0 +1,231 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model linked to Clerk
+model User {
+  id            String    @id // Clerk user ID
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Profile info from Clerk
+  email         String    @unique
+  name          String
+  avatar        String?
+  role          UserRole  @default(APPLICANT)
+
+  // Relations based on role
+  applicant     Applicant?
+  employer      Employer?
+  messages      Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  
+  @@index([email])
+  @@index([role])
+}
+
+// Applicant profile
+model Applicant {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Profile info (from JobDetails.vue)
+  age         Int
+  education   String?
+  skills      String?
+  languages   String?
+  experience  String?
+  introduction String  @db.Text
+
+  // Relations
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  applications Application[]
+  
+  @@index([userId])
+}
+
+// Employer profile
+model Employer {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  role        String   // e.g., "HR Manager"
+  department  String?
+
+  // Relations
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id])
+  
+  @@index([userId])
+  @@index([businessId])
+}
+
+// Business profile
+model Business {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  name        String
+  address     String
+  description String?  @db.Text
+  logo        String?
+  isComplete  Boolean  @default(false)
+
+  // Relations
+  employers   Employer[]
+  jobs        Job[]
+}
+
+// Job posting
+model Job {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  title       String
+  category    String
+  description String   @db.Text
+  location    String
+  isRemote    Boolean  @default(false)
+
+  // Schedule
+  startDateTime DateTime
+  endDateTime   DateTime
+  duration      String?
+  scheduleDescription String?
+
+  // Compensation
+  payRateAmount     Float
+  payRateDescription String
+  perks             String?
+
+  // Requirements
+  requiredSkills    String?
+  languages         String?
+  dressCode         String?
+  additionalRequirements String?
+
+  // Status
+  status     JobStatus @default(DRAFT)
+
+  // Stats
+  viewCount  Int      @default(0)
+  applicantCount Int  @default(0)
+  shortlistedCount Int @default(0)
+
+  // Relations
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+  applications Application[]
+
+  @@index([businessId])
+  @@index([status])
+}
+
+// Job application
+model Application {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  status      ApplicationStatus @default(PENDING)
+  
+  // Relations
+  applicantId String
+  applicant   Applicant @relation(fields: [applicantId], references: [id])
+  jobId       String
+  job         Job      @relation(fields: [jobId], references: [id])
+  attachments Attachment[]
+
+  @@index([applicantId])
+  @@index([jobId])
+  @@index([status])
+}
+
+// Simple chat messages
+model Message {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  content     String   @db.Text
+  isRead      Boolean  @default(false)
+
+  // Relations
+  fromId      String
+  from        User     @relation("SentMessages", fields: [fromId], references: [id])
+  toId        String  
+  to          User     @relation("ReceivedMessages", fields: [toId], references: [id])
+
+  @@index([fromId])
+  @@index([toId])
+}
+
+// Application attachments
+model Attachment {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+
+  name        String
+  url         String
+  type        AttachmentType
+
+  // Relations
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id])
+
+  @@index([applicationId])
+}
+
+enum UserRole {
+  APPLICANT
+  EMPLOYER
+  ADMIN
+}
+
+enum JobStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+}
+
+enum ApplicationStatus {
+  PENDING
+  SHORTLISTED
+  ACCEPTED
+  REJECTED
+}
+
+enum AttachmentType {
+  IMAGE
+  DOCUMENT
+}
+
+model Profile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  businessName        String
+  businessAddress     String
+  businessDescription String
+  businessLogo        String?
+
+  contactPerson Json // Stores the contact person details as JSON
+
+  @@index([userId])
+}

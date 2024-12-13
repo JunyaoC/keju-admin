@@ -1,11 +1,121 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
+import AdminLayout from '../layouts/AdminLayout.astro';
+import Jobs from '@/components/jobs/Jobs.vue';
+import HeaderActions from '@/components/jobs/HeaderActions.vue';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+// Get user data from locals - now includes all relations
+const { user } = Astro.locals;
+const { employer } = user;
+
+// Placeholder data
+const stats = {
+  activeJobs: 6,
+  totalJobs: 8,
+  applications: 45,
+  newApplications: 12,
+  totalViews: 234,
+  unreadMessages: 5
+};
+
+const recentMessages = [
+  {
+    id: 1,
+    name: 'Sarah Chen',
+    jobTitle: 'Weekend Barista',
+    message: 'Thank you for considering my application...',
+    timestamp: '2024-02-15T08:30:00Z'
+  },
+  {
+    id: 2,
+    name: 'Ahmad Abdullah',
+    jobTitle: 'Event Staff',
+    message: 'When can I start the job?',
+    timestamp: '2024-02-14T08:30:00Z'
+  }
+];
 ---
 
-<Layout>
-	<Welcome />
-</Layout>
+<AdminLayout>
+  <div class="container py-6 space-y-8">
+    <!-- Welcome Header -->
+    <div class="flex items-center justify-between">
+      <div class="space-y-1">
+        <h1 class="text-2xl font-bold">Welcome back!</h1>
+        <div class="flex items-center gap-2 text-muted-foreground">
+          {employer && (
+            <>
+              <span class="font-bold">{user.name}</span>
+              <span>·</span>
+              <span>{employer.role} of {employer?.business?.name }</span>
+            </>
+          )}
+          <a href="/profile" class="text-sm text-primary hover:underline">Edit Profile</a>
+        </div>
+      </div>
+      <HeaderActions client:load />
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="p-4 rounded-lg border bg-card">
+        <h3 class="text-sm font-medium text-muted-foreground">Active Jobs</h3>
+        <div class="mt-2">
+          <span class="text-2xl font-bold">{stats.activeJobs}</span>
+          <span class="text-sm text-muted-foreground ml-2">of {stats.totalJobs}</span>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-lg border bg-card">
+        <h3 class="text-sm font-medium text-muted-foreground">Applications</h3>
+        <div class="mt-2">
+          <span class="text-2xl font-bold">{stats.applications}</span>
+          <span class="text-sm text-green-600 ml-2">+{stats.newApplications} new</span>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-lg border bg-card">
+        <h3 class="text-sm font-medium text-muted-foreground">Total Views</h3>
+        <div class="mt-2">
+          <span class="text-2xl font-bold">{stats.totalViews}</span>
+          <span class="text-sm text-muted-foreground ml-2">all jobs</span>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-lg border bg-card">
+        <h3 class="text-sm font-medium text-muted-foreground">Messages</h3>
+        <div class="mt-2">
+          <span class="text-2xl font-bold">{stats.unreadMessages}</span>
+          <span class="text-sm text-muted-foreground ml-2">unread</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Messages -->
+    <div class="space-y-3">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold">Recent Messages</h2>
+        <a href="/chat" class="text-sm text-primary hover:underline">View All</a>
+      </div>
+      <div class="grid gap-3 md:grid-cols-2">
+        {recentMessages.map(msg => (
+          <div class="p-3 rounded-lg border bg-card">
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="font-medium">{msg.name}</p>
+                <p class="text-sm text-muted-foreground">{msg.jobTitle}</p>
+              </div>
+              <div class="w-2 h-2 rounded-full bg-primary"></div>
+            </div>
+            <p class="mt-2 text-sm text-muted-foreground line-clamp-1">{msg.message}</p>
+            <p class="mt-1 text-xs text-muted-foreground">
+              {new Date(msg.timestamp).toLocaleDateString()}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- Jobs List -->
+    <Jobs client:load />
+  </div>
+</AdminLayout>

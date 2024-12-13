@@ -1,0 +1,56 @@
+---
+import '@/styles/globals.css';
+import UserNav from '@/components/auth/UserNav.vue';
+import ProfileCheck from '@/components/auth/ProfileCheck.astro';
+
+interface Props {
+  title?: string;
+}
+
+const { title = 'Job Board Admin' } = Astro.props;
+const user = Astro.locals.user;
+
+// Navigation items
+const navigation = [
+  { name: 'Home', href: '/' },
+  { name: 'Chat', href: '/chat' },
+  { name: 'Profile', href: '/profile' }
+];
+
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+  </head>
+  <body class="min-h-screen bg-background">
+    <div class="relative flex min-h-screen flex-col">
+      <ProfileCheck />
+      <header class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div class="container flex h-14 items-center justify-between">
+          <div class="flex items-center">
+            <a href="/" class="mr-6 flex items-center space-x-2">
+              <span class="font-bold text-2xl">🧀 Keju</span>
+            </a>
+            <nav class="flex items-center space-x-6 text-sm font-medium">
+              {navigation.map(item => (
+                <a 
+                  href={item.href}
+                  class="transition-colors hover:text-foreground/80"
+                  aria-current={Astro.url.pathname === item.href ? 'page' : undefined}
+                >
+                  {item.name}
+                </a>
+              ))}
+            </nav>
+          </div>
+          <UserNav client:load initialUser={user} />
+        </div>
+      </header>
+      <main class="flex-1">
+        <slot />
+      </main>
+    </div>
+  </body>
+</html> 
